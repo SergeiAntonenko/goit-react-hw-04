@@ -1,54 +1,89 @@
-import { useState, useEffect } from "react";
-import ContactForm from "../ContactForm/ContactForm.jsx";
-import SearchBox from "../SearchBox/SearchBox.jsx";
-import ContactList from "../ContactList/ContactList.jsx";
-import initialContacts from "../../contacts.json";
+import { useEffect, useState } from "react";
+import ErrorMessage from "../ErrorMessage/ErrorMessage.jsx";
+import ImageGallery from "../ImageGallary/ImageGallary.jsx";
+import ImageModal from "../ImageModal/ImageModal.jsx";
+import LoadMoreBtn from "../LoadMoreBtn/LoadMoreBtn.jsx";
+import Loader from "../Loader/Loader.jsx";
+import SearchBar from "../SearchBar/SearchBar.jsx";
+import { fetchImages } from "../../api/images.js";
 import css from "./App.module.css";
 
-const App = () => {
-  const [contacts, setContacts] = useState(() => {
-    const localStorageData = window.localStorage.getItem("contacts");
-    return localStorageData ? JSON.parse(localStorageData) : initialContacts;
-  });
-  const [searchValue, setSearchValue] = useState("");
-  const filteredContacts = contacts.filter(
-    (contact) =>
-      contact.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      contact.number.toString().includes(searchValue)
-  );
+function App() {
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [tapImage, setTapImage] = useState(null);
+  const [totalImages, setTotalImages] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const openModal = (imageUrl) => {
+    setTapImage(imageUrl);
+    setIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setTapImage(null);
+    setIsOpen(false);
+  };
 
   useEffect(() => {
-    window.localStorage.setItem("contacts", JSON.stringify(contacts));
-  }, [contacts]);
+    if (query) {
+      setIsLoading(true);
+      const getImages = async () => {
+        try {
+          const response = await fetchImages(query, page);
+          if (response) {
+            setTotalImages(response.total);
+            if (response.results.length === 0) {
+              setError("No results found");
+            } else {
+              setImages((prev) => [...prev, ...response.results]);
+              setError("");
+            }
+          } else {
+            setError(true);
+          }
+        } catch (error) {
+          console.log(error);
+          setError(true);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      getImages();
+    }
+  }, [query, page]);
 
-  const handleChangeSearch = (e) => {
-    setSearchValue(e.target.value);
+  const handleSubmit = (newQuery) => {
+    if (newQuery === query) {
+      return;
+    }
+    setIsLoading(true);
+    setImages([]);
+    setQuery(newQuery);
+    setPage(1);
+    setIsSubmitted(true);
   };
 
-  const handleDeleteContact = (id) => {
-    const nextContacts = [...contacts];
-    const index = nextContacts.findIndex((contact) => contact.id === id);
-    nextContacts.splice(index, 1);
-    setContacts(nextContacts);
-  };
-
-  const handleAddTour = (contactItem) => {
-    setContacts((prevState) => {
-      return [...prevState, contactItem];
-    });
+  const handleLoadMore = () => {
+    setPage((prev) => prev + 1);
   };
 
   return (
     <div className={css["container"]}>
-      <h1>Phonebook</h1>
-      <ContactForm onAddContact={handleAddTour} />
-      <SearchBox
-        searchValue={searchValue}
-        handleChangeSearch={handleChangeSearch}
-      />
-      <ContactList contacts={filteredContacts} onDelete={handleDeleteContact} />
+      <SearchBar onSubmit={handleSubmit} />
+      <ImageGallery images={images} openModal={openModal} />
+      {isSubmitted && error && !isLoading && <ErrorMessage message={error} />}
+      <ImageModal isOpen={isOpen} closeModal={closeModal} imageUrl={tapImage} />
+      {isLoading && !error && <Loader />}
+      {!isLoading && !error && images.length < totalImages && (
+        <LoadMoreBtn onLoadMore={handleLoadMore} />
+      )}
     </div>
   );
-};
+}
 
 export default App;
