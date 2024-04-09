@@ -3,6 +3,9 @@
   justify-content: center;
   padding: 10px;
   background-color: #3609c7;
+  position: sticky;
+  top: 0;
+  z-index: 999;
 }
 
 .header-form {

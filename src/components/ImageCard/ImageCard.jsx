@@ -5,11 +5,12 @@ const ImageCard = ({ image, openModal }) => {
     openModal(image.urls.regular);
   };
   return (
-    <li className={css["imageCard"]} onClick={handleClick}>
+    <li className={css["imageCard"]}>
       <img
         className={css["image"]}
         src={image.urls.small}
         alt={image.alt_description}
+        onClick={handleClick}
       />
     </li>
   );
