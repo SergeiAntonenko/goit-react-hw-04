@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ErrorMessage from "../ErrorMessage/ErrorMessage.jsx";
-import ImageGallery from "../ImageGallary/ImageGallary.jsx";
+import ImageGallery from "../ImageGallery/ImageGallery.jsx";
 import ImageModal from "../ImageModal/ImageModal.jsx";
 import LoadMoreBtn from "../LoadMoreBtn/LoadMoreBtn.jsx";
 import Loader from "../Loader/Loader.jsx";
